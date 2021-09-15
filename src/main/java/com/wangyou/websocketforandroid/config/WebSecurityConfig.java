@@ -1,11 +1,16 @@
 package com.wangyou.websocketforandroid.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wangyou.websocketforandroid.entity.ResponseData;
+import com.wangyou.websocketforandroid.entity.User;
+import com.wangyou.websocketforandroid.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.*;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -29,27 +34,23 @@ import java.util.Map;
 
 @Configuration
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Autowired
+    UserService userService;
+
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    /**
-     * 密码加密过：123
-     */
+
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        web.ignoring().antMatchers("/test");
+    }
+
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication()
-                .withUser("admin1")
-                .password("$2a$10$RMuFXGQ5AtH4wOvkUqyvuecpqUSeoxZYqilXzbz50dceRsga.WYiq")
-                .roles("admin")
-                .and()
-                .withUser("admin2")
-                .password("$2a$10$RMuFXGQ5AtH4wOvkUqyvuecpqUSeoxZYqilXzbz50dceRsga.WYiq")
-                .roles("user")
-                .and()
-                .withUser("admin3")
-                .password("$2a$10$RMuFXGQ5AtH4wOvkUqyvuecpqUSeoxZYqilXzbz50dceRsga.WYiq")
-                .roles("user");
+        auth.userDetailsService(userService);
     }
 
     @Override
@@ -64,15 +65,16 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .successHandler(new AuthenticationSuccessHandler() {
                     @Override
                     public void onAuthenticationSuccess(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Authentication authentication) throws IOException, ServletException {
-                        Object principal = authentication.getPrincipal();
+                        User principal = (User) authentication.getPrincipal();
                         httpServletResponse.setContentType("application/json;charset=utf-8");
                         PrintWriter out = httpServletResponse.getWriter();
                         httpServletResponse.setStatus(200);
                         Map<String, Object> map = new HashMap<>();
-                        map.put("status", 200);
+                        map.put("code", 200);
                         map.put("msg", principal);
+                        ResponseData<User> responseData = ResponseData.<User>builder().code("200").msg("登录成功").data(principal).build();
                         ObjectMapper om = new ObjectMapper();
-                        out.write(om.writeValueAsString(map));
+                        out.write(om.writeValueAsString(responseData));
                         out.flush();
                         out.close();
                     }
