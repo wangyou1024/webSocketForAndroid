@@ -31,6 +31,9 @@ public class UserRelation {
     @TableField("read_time")
     private Integer readTime;
 
+    /**
+     * 是否可用，0：未操作，1：拒绝，2：同意，3：删除，4：从关系(实际有效内容为read_time)
+     */
     @TableField("enable")
     private Integer enable;
 }

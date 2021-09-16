@@ -84,23 +84,26 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                     public void onAuthenticationFailure(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, AuthenticationException e) throws IOException, ServletException {
                         httpServletResponse.setContentType("application/json;charset=utf-8");
                         PrintWriter out = httpServletResponse.getWriter();
-                        httpServletResponse.setStatus(401);
-                        ResponseData.ResponseDataBuilder<User> data = ResponseData.<User>builder().code("401").data(null);
+                        // 由客户端处理逻辑
+                        // httpServletResponse.setStatus(401);
+                        httpServletResponse.setStatus(200);
+                        ResponseData.ResponseDataBuilder<User> builder = ResponseData.<User>builder().code("401").data(new User());
                         if (e instanceof LockedException){
-                            data.msg("账户被锁定，登录失败");
+                            builder.msg("账户被锁定，登录失败");
                         } else if (e instanceof BadCredentialsException) {
-                            data.msg("账户名或者密码输入错误，登录失败");
+                            builder.msg("账户名或者密码输入错误，登录失败");
                         } else if (e instanceof DisabledException) {
-                            data.msg("账户被禁用，登录失败");
+                            builder.msg("账户被禁用，登录失败");
                         } else if (e instanceof AccountExpiredException) {
-                            data.msg("账户已过期，登录失败");
+                            builder.msg("账户已过期，登录失败");
                         } else if (e instanceof CredentialsExpiredException){
-                            data.msg("密码已过期，登录失败");
+                            builder.msg("密码已过期，登录失败");
                         }else {
-                            data.msg("登录失败");
+                            builder.msg("登录失败");
                         }
                         ObjectMapper om = new ObjectMapper();
-                        out.write(om.writeValueAsString(data.build()));
+                        ResponseData<User> data = builder.build();
+                        out.write(om.writeValueAsString(data));
                         out.flush();
                         out.close();
                     }

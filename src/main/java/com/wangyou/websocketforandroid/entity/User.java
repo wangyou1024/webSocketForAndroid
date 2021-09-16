@@ -58,10 +58,10 @@ public class User implements UserDetails {
     private Integer updateTime;
 
     @TableField("enable")
-    private Integer enable;
+    private Integer enable = 1;
 
     @TableField("locked")
-    private Integer locked;
+    private Integer locked = 0;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

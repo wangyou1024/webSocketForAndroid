@@ -1,5 +1,6 @@
 package com.wangyou.websocketforandroid.controller;
 
+import com.wangyou.websocketforandroid.entity.UserRelation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -30,6 +31,7 @@ public class GreetingController {
     public void chat(Principal principal, String message){
         simpMessagingTemplate.convertAndSendToUser(principal.getName(), "/queue/chat", new String[]{message});
     }
+
 
     @RequestMapping("/test")
     public @ResponseBody String test(){
