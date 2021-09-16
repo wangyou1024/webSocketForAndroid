@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wangyou.websocketforandroid.entity.ResponseData;
 import com.wangyou.websocketforandroid.entity.User;
 import com.wangyou.websocketforandroid.service.UserService;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,14 +19,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.logout.LogoutHandler;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author 王游
@@ -45,7 +45,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(WebSecurity web) throws Exception {
-        web.ignoring().antMatchers("/test");
+        web.ignoring().antMatchers("/test","/user/signUp");
     }
 
     @Override
@@ -59,6 +59,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest()
                 .authenticated()
                 .and()
+                .rememberMe()
+                .tokenValiditySeconds(3600)
+                .and()
                 .formLogin()
                 .usernameParameter("username")
                 .passwordParameter("password")
@@ -69,9 +72,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         httpServletResponse.setContentType("application/json;charset=utf-8");
                         PrintWriter out = httpServletResponse.getWriter();
                         httpServletResponse.setStatus(200);
-                        Map<String, Object> map = new HashMap<>();
-                        map.put("code", 200);
-                        map.put("msg", principal);
                         ResponseData<User> responseData = ResponseData.<User>builder().code("200").msg("登录成功").data(principal).build();
                         ObjectMapper om = new ObjectMapper();
                         out.write(om.writeValueAsString(responseData));
@@ -85,28 +85,49 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         httpServletResponse.setContentType("application/json;charset=utf-8");
                         PrintWriter out = httpServletResponse.getWriter();
                         httpServletResponse.setStatus(401);
-                        Map<String, Object> map = new HashMap<>();
-                        map.put("status", 401);
+                        ResponseData.ResponseDataBuilder<User> data = ResponseData.<User>builder().code("401").data(null);
                         if (e instanceof LockedException){
-                            map.put("msg", "账户被锁定，登录失败");
+                            data.msg("账户被锁定，登录失败");
                         } else if (e instanceof BadCredentialsException) {
-                            map.put("msg", "账户名或者密码输入错误，登录失败");
+                            data.msg("账户名或者密码输入错误，登录失败");
                         } else if (e instanceof DisabledException) {
-                            map.put("msg", "账户被禁用，登录失败");
+                            data.msg("账户被禁用，登录失败");
                         } else if (e instanceof AccountExpiredException) {
-                            map.put("msg", "账户已过期，登录失败");
+                            data.msg("账户已过期，登录失败");
                         } else if (e instanceof CredentialsExpiredException){
-                            map.put("msg", "密码已过期，登录失败");
+                            data.msg("密码已过期，登录失败");
                         }else {
-                            map.put("msg", "登录失败");
+                            data.msg("登录失败");
                         }
                         ObjectMapper om = new ObjectMapper();
-                        out.write(om.writeValueAsString(map));
+                        out.write(om.writeValueAsString(data.build()));
                         out.flush();
                         out.close();
                     }
                 })
                 .permitAll()
+                .and()
+                .logout()
+                .logoutUrl("/logout")
+                .addLogoutHandler(new LogoutHandler() {
+                    @Override
+                    public void logout(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Authentication authentication) {
+                        User user = (User) authentication.getPrincipal();
+                        httpServletResponse.setContentType("application/json;charset=utf-8");
+                        try {
+                            PrintWriter out = httpServletResponse.getWriter();
+                            httpServletResponse.setStatus(200);
+                            ResponseData<User> responseData = ResponseData.<User>builder().code("200").msg("退出成功").data(user).build();
+                            ObjectMapper om = new ObjectMapper();
+                            out.write(om.writeValueAsString(responseData));
+                            out.flush();
+                            out.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                })
                 .and()
                 .csrf()
                 .disable();
