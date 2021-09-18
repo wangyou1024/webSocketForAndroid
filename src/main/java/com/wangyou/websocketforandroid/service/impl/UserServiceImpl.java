@@ -15,10 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
@@ -42,7 +39,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public ResponseData<User> signUp(String username, String password) {
         User oldUser = baseMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getUsername, username).or().eq(User::getPhone, username));
-        if (oldUser != null){
+        if (oldUser != null) {
             return ResponseData.<User>builder()
                     .code("200")
                     .msg("已注册")
@@ -58,7 +55,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .locked(0)
                 .build();
         boolean isSuccess = save(user);
-        if (isSuccess){
+        if (isSuccess) {
             return ResponseData.<User>builder()
                     .code("200")
                     .msg("注册成功")
@@ -77,10 +74,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         Set<Long> ids = new HashSet<>();
         for (UserRelation userRelation :
                 userRelations) {
-            ids.add(userRelation.getUidFormer());
-            ids.add(userRelation.getUidLatter());
+            if (!Objects.equals(userRelation.getUidFormer(), user.getUid())) {
+                ids.add(userRelation.getUidFormer());
+            }
+            if (!Objects.equals(userRelation.getUidLatter(), user.getUid())) {
+                ids.add(userRelation.getUidLatter());
+            }
         }
-        List<User> users = listByIds(ids);
-        return users;
+        return listByIds(ids);
     }
 }
