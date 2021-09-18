@@ -18,7 +18,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry stompEndpointRegistry) {
         //允许使用socketJs方式访问，访问点为chat，允许跨域
-        stompEndpointRegistry.addEndpoint("/chat").setAllowedOrigins("*").withSockJS();
+        stompEndpointRegistry.addEndpoint("/chat", "/friendApplication").setAllowedOrigins("*").withSockJS();
     }
 
     @Override

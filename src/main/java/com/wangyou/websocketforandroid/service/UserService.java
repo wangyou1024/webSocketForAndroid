@@ -5,7 +5,11 @@ import com.wangyou.websocketforandroid.entity.ResponseData;
 import com.wangyou.websocketforandroid.entity.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
+import java.util.List;
+
 public interface UserService extends UserDetailsService, IService<User> {
 
     public ResponseData<User> signUp(String username, String password);
+
+    public List<User> findFriend(String username);
 }

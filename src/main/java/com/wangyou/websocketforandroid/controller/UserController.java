@@ -22,6 +22,15 @@ public class UserController {
         return userService.signUp(username, password);
     }
 
+    @GetMapping("findUserById")
+    public ResponseData<User> findUserById(@RequestParam("uid") Long uid){
+        return ResponseData.<User>builder()
+                .code("200")
+                .msg("获取成功")
+                .data(userService.getOne(Wrappers.<User>lambdaQuery().eq(User::getUid, uid).eq(User::getEnable, 1)))
+                .build();
+    }
+
     @GetMapping("/findUserByUsername")
     public ResponseData<User> findUserByUsername(@RequestParam("username") String username) {
         return ResponseData.<User>builder()
@@ -31,6 +40,16 @@ public class UserController {
                         .eq(User::getUsername, username)
                         .or()
                         .eq(User::getPhone, username)))
+                .build();
+    }
+
+    @GetMapping("/findFriends")
+    public ResponseData<List<User>> findFriend(Principal principal){
+        List<User> friendList = userService.findFriend(principal.getName());
+        return ResponseData.<List<User>>builder()
+                .code("200")
+                .msg("获取成功")
+                .data(friendList)
                 .build();
     }
 
@@ -57,5 +76,16 @@ public class UserController {
                         .eq(User::getUsername, principal.getName())))
                 .build();
     }
+
+    @PostMapping("/findUserListByIds")
+    public ResponseData<List<User>> findUserByIds(@RequestBody List<Long> ids){
+        return ResponseData.<List<User>>builder()
+                .code("200")
+                .msg("获取成功")
+                .data(userService.list(Wrappers.<User>lambdaQuery().eq(User::getEnable, 1).in(User::getUid, ids)))
+                .build();
+    }
+
+
 
 }
