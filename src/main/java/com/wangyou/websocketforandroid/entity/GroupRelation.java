@@ -4,17 +4,21 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
 @Builder
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName("group_relation")
 public class GroupRelation {
+
+    public final static int NO_DEAL = 0;
+    public final static int REFUSE = 1;
+    public final static int AGREE = 2;
+    public final static int DISMISS = 3;
+    public final static int LEADER = 4;
 
     @TableId(value = "grid",  type = IdType.AUTO)
     private Long grid;
@@ -31,6 +35,9 @@ public class GroupRelation {
     @TableField("read_time")
     private Integer readTime;
 
+    /**
+     * 是否可用，0代表未操作，1代表拒绝，2代表同意，3代表群聊已解散，4代表群主
+     */
     @TableField("enable")
     private Integer enable;
 }

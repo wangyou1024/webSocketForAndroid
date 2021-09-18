@@ -10,6 +10,6 @@ import org.springframework.web.socket.messaging.SessionConnectedEvent;
 public class ConnectedEventListener implements ApplicationListener<SessionConnectedEvent> {
     @Override
     public void onApplicationEvent(SessionConnectedEvent sessionConnectedEvent) {
-        log.info("连通：" + sessionConnectedEvent.getUser().getName() + "->" + sessionConnectedEvent.getMessage());
+        log.info("连通：" + sessionConnectedEvent.getUser().getName() + "->" + sessionConnectedEvent.getMessage().getHeaders());
     }
 }

@@ -2,9 +2,11 @@ package com.wangyou.websocketforandroid.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.wangyou.websocketforandroid.entity.GroupRelation;
 import com.wangyou.websocketforandroid.entity.ResponseData;
 import com.wangyou.websocketforandroid.entity.User;
 import com.wangyou.websocketforandroid.entity.UserRelation;
+import com.wangyou.websocketforandroid.mapper.GroupRelationMapper;
 import com.wangyou.websocketforandroid.mapper.UserMapper;
 import com.wangyou.websocketforandroid.mapper.UserRelationMapper;
 import com.wangyou.websocketforandroid.service.UserService;
@@ -26,9 +28,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Autowired
     UserRelationMapper userRelationMapper;
 
+    @Autowired
+    GroupRelationMapper groupRelationMapper;
+
     @Override
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
-        User user = baseMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getUsername, s).or().eq(User::getPhone, s));
+        User user = baseMapper.selectOne(Wrappers.<User>lambdaQuery()
+                .eq(User::getEnable, 1)
+                .and(i -> i.eq(User::getUsername, s)
+                        .or()
+                        .eq(User::getPhone, s)));
         if (user == null) {
             user = new User();
         }
@@ -69,9 +78,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public List<User> findFriend(String username) {
         User user = baseMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getUsername, username));
         List<UserRelation> userRelations = userRelationMapper.selectList(Wrappers.<UserRelation>lambdaQuery()
-                .lt(UserRelation::getEnable, 3)
+                .eq(UserRelation::getEnable, 2)
                 .and(i -> i.eq(UserRelation::getUidFormer, user.getUid()).or().eq(UserRelation::getUidLatter, user.getUid())));
         Set<Long> ids = new HashSet<>();
+        ids.add(-1L);
         for (UserRelation userRelation :
                 userRelations) {
             if (!Objects.equals(userRelation.getUidFormer(), user.getUid())) {
@@ -81,6 +91,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 ids.add(userRelation.getUidLatter());
             }
         }
-        return listByIds(ids);
+        return list(Wrappers.<User>lambdaQuery()
+                .eq(User::getEnable, 1)
+                .and(i -> i.in(User::getUid, ids)));
+    }
+
+    @Override
+    public User findLeader(Long gid) {
+        GroupRelation groupRelation = groupRelationMapper.selectOne(Wrappers.<GroupRelation>lambdaQuery()
+                .eq(GroupRelation::getGid, gid)
+                .eq(GroupRelation::getEnable, GroupRelation.LEADER));
+        return baseMapper.selectById(groupRelation.getUid());
+    }
+
+    @Override
+    public List<User> findMembers(Long gid) {
+        List<GroupRelation> groupRelations = groupRelationMapper.selectList(Wrappers.<GroupRelation>lambdaQuery()
+                .eq(GroupRelation::getGid, gid)
+                .eq(GroupRelation::getEnable, GroupRelation.AGREE));
+        Set<Long> ids = new HashSet<>();
+        ids.add(-1L);
+        for (GroupRelation groupRelation :
+                groupRelations) {
+            ids.add(groupRelation.getUid());
+        }
+        return baseMapper.selectList(Wrappers.<User>lambdaQuery().in(User::getUid, ids).eq(User::getEnable, 1));
     }
 }

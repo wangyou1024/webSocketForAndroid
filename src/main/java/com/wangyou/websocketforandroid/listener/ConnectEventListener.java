@@ -13,6 +13,6 @@ import org.springframework.web.socket.messaging.SessionConnectEvent;
 public class ConnectEventListener implements ApplicationListener<SessionConnectEvent> {
     @Override
     public void onApplicationEvent(SessionConnectEvent sessionConnectEvent) {
-        log.info("连接：" + sessionConnectEvent.getUser().getName() + "->" + sessionConnectEvent.getMessage());
+        log.info("连接：" + sessionConnectEvent.getUser().getName() + "->" + sessionConnectEvent.getMessage().getHeaders());
     }
 }

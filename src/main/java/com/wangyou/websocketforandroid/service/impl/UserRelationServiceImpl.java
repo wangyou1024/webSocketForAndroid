@@ -23,7 +23,7 @@ public class UserRelationServiceImpl extends ServiceImpl<UserRelationMapper, Use
         User user = userService.getOne(Wrappers.<User>lambdaQuery().eq(User::getUsername, username));
         // enable为4代表从关系
         UserRelation userRelation = getOne(Wrappers.<UserRelation>lambdaQuery()
-                .lt(UserRelation::getEnable, 4)
+                .lt(UserRelation::getEnable, UserRelation.DEPENDENCE)
                 .and(i -> i.nested(t -> t.eq(UserRelation::getUidFormer, user.getUid()).eq(UserRelation::getUidLatter, uid))
                         .or()
                         .nested(t -> t.eq(UserRelation::getUidLatter, user.getUid()).eq(UserRelation::getUidFormer, uid))
@@ -37,7 +37,7 @@ public class UserRelationServiceImpl extends ServiceImpl<UserRelationMapper, Use
     @Override
     public UserRelation handleUserRelation(UserRelation userRelation) {
         UserRelation oldRelation = getOne(Wrappers.<UserRelation>lambdaQuery()
-                .lt(UserRelation::getEnable, 4)
+                .lt(UserRelation::getEnable, UserRelation.DEPENDENCE)
                 .and(i -> i.nested(t -> t.eq(UserRelation::getUidFormer, userRelation.getUidFormer()).eq(UserRelation::getUidLatter, userRelation.getUidLatter()))
                         .or()
                         .nested(t -> t.eq(UserRelation::getUidFormer, userRelation.getUidLatter()).eq(UserRelation::getUidLatter, userRelation.getUidFormer()))
@@ -46,16 +46,32 @@ public class UserRelationServiceImpl extends ServiceImpl<UserRelationMapper, Use
         if (oldRelation == null) {
             // 新申请
             userRelation.setUrid(null);
-            userRelation.setUpdateTime((int) (Instant.now().getEpochSecond() / 1000));
-            userRelation.setReadTime((int) (Instant.now().getEpochSecond() / 1000));
-            userRelation.setEnable(0);
+            userRelation.setUpdateTime((int) (Instant.now().getEpochSecond()));
+            userRelation.setReadTime((int) (Instant.now().getEpochSecond()));
+            userRelation.setEnable(UserRelation.NO_DEAL);
             result = baseMapper.insert(userRelation);
             oldRelation = userRelation;
         } else {
             // 已有申请
-            oldRelation.setUpdateTime((int) (Instant.now().getEpochSecond() / 1000));
+            oldRelation.setUpdateTime((int) (Instant.now().getEpochSecond()));
             oldRelation.setEnable(userRelation.getEnable());
             result = baseMapper.updateById(oldRelation);
+        }
+        // 查看是否存在从关系
+        UserRelation dependenceRelation = getOne(Wrappers.<UserRelation>lambdaQuery().eq(UserRelation::getEnable, UserRelation.DEPENDENCE)
+                .eq(UserRelation::getUidFormer, oldRelation.getUidLatter()).eq(UserRelation::getUidLatter, oldRelation.getUidFormer()));
+        if (dependenceRelation != null){
+            dependenceRelation.setUpdateTime(oldRelation.getUpdateTime());
+            baseMapper.updateById(dependenceRelation);
+        } else {
+          dependenceRelation = UserRelation.builder()
+                  .enable(UserRelation.DEPENDENCE)
+                  .readTime(oldRelation.getUpdateTime())
+                  .updateTime(oldRelation.getUpdateTime())
+                  .uidFormer(oldRelation.getUidLatter())
+                  .uidLatter(oldRelation.getUidFormer())
+                  .build();
+          baseMapper.insert(dependenceRelation);
         }
         if (result == 0){
             // 错误

@@ -12,4 +12,8 @@ public interface UserService extends UserDetailsService, IService<User> {
     public ResponseData<User> signUp(String username, String password);
 
     public List<User> findFriend(String username);
+
+    public User findLeader(Long gid);
+
+    public List<User> findMembers(Long gid);
 }

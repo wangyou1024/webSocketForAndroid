@@ -4,17 +4,21 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
 @Builder
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName("user_relation")
 public class UserRelation {
+
+    public final static int NO_DEAL = 0;
+    public final static int REFUSE = 1;
+    public final static int AGREE = 2;
+    public final static int DELETE = 3;
+    public final static int DEPENDENCE = 4;
 
     @TableId(value = "urid", type = IdType.AUTO)
     private Long urid;

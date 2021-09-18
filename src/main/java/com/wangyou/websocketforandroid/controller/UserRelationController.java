@@ -41,7 +41,7 @@ public class UserRelationController {
                 .code("200")
                 .msg("获取成功")
                 .data(userRelationService.list(Wrappers.<UserRelation>lambdaQuery()
-                        .lt(UserRelation::getEnable, 3)
+                        .lt(UserRelation::getEnable, UserRelation.DEPENDENCE)
                         .and(i -> i.eq(UserRelation::getUidFormer, user.getUid()).or().eq(UserRelation::getUidLatter, user.getUid()))))
                 .build();
     }

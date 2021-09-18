@@ -1,8 +1,10 @@
 package com.wangyou.websocketforandroid.controller;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.wangyou.websocketforandroid.entity.GroupRelation;
 import com.wangyou.websocketforandroid.entity.ResponseData;
 import com.wangyou.websocketforandroid.entity.User;
+import com.wangyou.websocketforandroid.service.GroupRelationService;
 import com.wangyou.websocketforandroid.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -17,13 +19,16 @@ public class UserController {
     @Autowired
     UserService userService;
 
+    @Autowired
+    GroupRelationService groupRelationService;
+
     @PostMapping("/signUp")
     public ResponseData<User> signUp(@RequestParam("username") String username, @RequestParam("password") String password) {
         return userService.signUp(username, password);
     }
 
     @GetMapping("findUserById")
-    public ResponseData<User> findUserById(@RequestParam("uid") Long uid){
+    public ResponseData<User> findUserById(@RequestParam("uid") Long uid) {
         return ResponseData.<User>builder()
                 .code("200")
                 .msg("获取成功")
@@ -37,14 +42,15 @@ public class UserController {
                 .code("200")
                 .msg("获取成功")
                 .data(userService.getOne(Wrappers.<User>lambdaQuery()
-                        .eq(User::getUsername, username)
-                        .or()
-                        .eq(User::getPhone, username)))
+                        .eq(User::getEnable, 1)
+                        .and(i -> i.eq(User::getUsername, username)
+                                .or()
+                                .eq(User::getPhone, username))))
                 .build();
     }
 
     @GetMapping("/findFriends")
-    public ResponseData<List<User>> findFriend(Principal principal){
+    public ResponseData<List<User>> findFriend(Principal principal) {
         List<User> friendList = userService.findFriend(principal.getName());
         return ResponseData.<List<User>>builder()
                 .code("200")
@@ -59,11 +65,12 @@ public class UserController {
                 .code("200")
                 .msg("获取成功")
                 .data(userService.list(Wrappers.<User>lambdaQuery()
-                        .like(User::getUsername, searchKey)
-                        .or()
-                        .like(User::getPhone, searchKey)
-                        .or()
-                        .like(User::getRealName, searchKey)))
+                        .eq(User::getEnable, 1)
+                        .and(i -> i.like(User::getUsername, searchKey)
+                                .or()
+                                .like(User::getPhone, searchKey)
+                                .or()
+                                .like(User::getRealName, searchKey))))
                 .build();
     }
 
@@ -78,7 +85,7 @@ public class UserController {
     }
 
     @PostMapping("/findUserListByIds")
-    public ResponseData<List<User>> findUserByIds(@RequestBody List<Long> ids){
+    public ResponseData<List<User>> findUserByIds(@RequestBody List<Long> ids) {
         return ResponseData.<List<User>>builder()
                 .code("200")
                 .msg("获取成功")
@@ -86,6 +93,23 @@ public class UserController {
                 .build();
     }
 
+    @GetMapping("/findLeader")
+    public ResponseData<User> findLeader(@RequestParam("gid") Long gid){
+        return ResponseData.<User>builder()
+                .code("200")
+                .msg("获取成功")
+                .data(userService.findLeader(gid))
+                .build();
+    }
+
+    @GetMapping("/findMembers")
+    public ResponseData<List<User>> findMembers(@RequestParam("gid") Long gid){
+        return ResponseData.<List<User>>builder()
+                .code("200")
+                .msg("获取成功")
+                .data(userService.findMembers(gid))
+                .build();
+    }
 
 
 }

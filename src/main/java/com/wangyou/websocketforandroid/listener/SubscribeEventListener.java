@@ -13,6 +13,6 @@ import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 public class SubscribeEventListener implements ApplicationListener<SessionSubscribeEvent> {
     @Override
     public void onApplicationEvent(SessionSubscribeEvent sessionSubscribeEvent) {
-        log.info("订阅：" + sessionSubscribeEvent.getUser().getName() + "->" + sessionSubscribeEvent.getMessage().getHeaders());
+        log.info("订阅：" + sessionSubscribeEvent.getUser().getName() + "->" + sessionSubscribeEvent.getMessage().getHeaders().get("destination"));
     }
 }
