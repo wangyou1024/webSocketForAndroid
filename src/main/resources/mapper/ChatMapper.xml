@@ -2,4 +2,71 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.wangyou.websocketforandroid.mapper.ChatMapper">
 
+    <select id="findLastSendChatList" resultType="com.wangyou.websocketforandroid.entity.Chat">
+        select chat.cid,
+               chat.sender,
+               chat.recipient,
+               chat.gid,
+               chat.content,
+               chat.update_time,
+               chat.enable
+        from chat,
+             (select recipient, max(update_time) last_time
+              from chat
+              where sender = #{sender}
+                and recipient in
+                <foreach collection="recipients" item="recipient" open="(" separator="," close=")" index="index">
+                    #{recipient}
+                </foreach>
+                and enable = #{type}
+              group by recipient) last_order
+        where sender = #{sender}
+          and enable = #{type}
+          and chat.recipient = last_order.recipient
+          and update_time = last_order.last_time
+    </select>
+    <select id="findLastReceiveChatList" resultType="com.wangyou.websocketforandroid.entity.Chat">
+        select chat.cid,
+        chat.sender,
+        chat.recipient,
+        chat.gid,
+        chat.content,
+        chat.update_time,
+        chat.enable
+        from chat,
+        (select sender, max(update_time) last_time
+        from chat
+        where recipient = #{recipient}
+        and sender in
+        <foreach collection="senders" item="sender" open="(" separator="," close=")" index="index">
+            #{sender}
+        </foreach>
+        and enable = #{type}
+        group by sender) last_order
+        where recipient = #{recipient}
+        and enable = #{type}
+        and chat.sender = last_order.sender
+        and update_time = last_order.last_time
+    </select>
+    <select id="findLastGroupChatList" resultType="com.wangyou.websocketforandroid.entity.Chat">
+        select chat.cid,
+        chat.sender,
+        chat.recipient,
+        chat.gid,
+        chat.content,
+        chat.update_time,
+        chat.enable
+        from chat,
+        (select gid, max(update_time) last_time
+        from chat
+        where  gid in
+        <foreach collection="groups" item="group" open="(" separator="," close=")" index="index">
+            #{group}
+        </foreach>
+        and enable = #{type}
+        group by gid) last_order
+        where enable = #{type}
+        and chat.gid = last_order.gid
+        and update_time = last_order.last_time
+    </select>
 </mapper>

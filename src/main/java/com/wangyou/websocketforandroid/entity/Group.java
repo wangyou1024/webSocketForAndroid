@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("group")
+@TableName("group_chat")
 public class Group {
 
     @TableId(value = "gid", type = IdType.AUTO)

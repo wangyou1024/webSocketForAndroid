@@ -111,5 +111,15 @@ public class UserController {
                 .build();
     }
 
+    @PostMapping("/updateUser")
+    public ResponseData<User> updateUser(@RequestBody User user) {
+        userService.updateById(user);
+        return ResponseData.<User>builder()
+                .code("200")
+                .msg("获取成功")
+                .data(user)
+                .build();
+    }
+
 
 }

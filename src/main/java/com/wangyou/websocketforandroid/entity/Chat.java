@@ -15,6 +15,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @TableName("chat")
 public class Chat {
+
+    public final static int PRIVATE_CHAT = 1;
+    public final static int GROUP_CHAT = 2;
+    public final static int DISABLE = 0;
+
     @TableId(value = "cid", type = IdType.AUTO)
     private Long cid;
 

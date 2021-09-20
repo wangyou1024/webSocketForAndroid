@@ -73,4 +73,14 @@ public class GroupController {
                         .in(Group::getGid, ids)))
                 .build();
     }
+
+    @PostMapping("/updateGroup")
+    public ResponseData<Group> updateGroup(@RequestBody Group group) {
+        groupService.updateById(group);
+        return ResponseData.<Group>builder()
+                .code("200")
+                .msg("修改成功")
+                .data(group)
+                .build();
+    }
 }

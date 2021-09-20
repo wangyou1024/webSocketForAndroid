@@ -40,6 +40,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
         }
         // 登录者作为群主
         User leader = userMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getUsername, username));
+        group.setGid(null);
         group.setGroupNum(Instant.now().getEpochSecond() + "");
         group.setUpdateTime((int) Instant.now().getEpochSecond());
         group.setEnable(1);
@@ -76,6 +77,6 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
                 groupRelations) {
             gids.add(groupRelation.getGid());
         }
-        return baseMapper.selectList(Wrappers.<Group>lambdaQuery().eq(Group::getEnable, 1).in(Group::getGroupName, gids));
+        return baseMapper.selectList(Wrappers.<Group>lambdaQuery().eq(Group::getEnable, 1).in(Group::getGid, gids));
     }
 }

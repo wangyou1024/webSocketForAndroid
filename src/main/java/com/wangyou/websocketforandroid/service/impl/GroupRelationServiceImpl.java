@@ -33,8 +33,9 @@ public class GroupRelationServiceImpl extends ServiceImpl<GroupRelationMapper, G
         // 查询加入的所有关系
         List<GroupRelation> groupRelations = baseMapper.selectList(Wrappers.<GroupRelation>lambdaQuery()
                 .eq(GroupRelation::getUid, user.getUid())
-                .eq(GroupRelation::getEnable, GroupRelation.AGREE));
-        // 查询自建的群聊
+                .ne(GroupRelation::getEnable, GroupRelation.LEADER)
+                .ne(GroupRelation::getEnable, GroupRelation.DISMISS));
+        // 查询自建的群聊: 如果群聊被解散，包括群主在内的所有关系被定为解散
         List<GroupRelation> leaderGroupRelations = baseMapper.selectList(Wrappers.<GroupRelation>lambdaQuery()
                 .eq(GroupRelation::getUid, user.getUid())
                 .eq(GroupRelation::getEnable, GroupRelation.LEADER));
@@ -44,6 +45,7 @@ public class GroupRelationServiceImpl extends ServiceImpl<GroupRelationMapper, G
             gids.add(groupRelation.getGid());
         }
         // 查询自己接收到的申请
+        gids.add(-1L);
         List<GroupRelation> groupRelationsApplication = baseMapper.selectList(Wrappers.<GroupRelation>lambdaQuery()
                 .in(GroupRelation::getGid, gids)
                 .ne(GroupRelation::getEnable, GroupRelation.LEADER)
@@ -63,6 +65,7 @@ public class GroupRelationServiceImpl extends ServiceImpl<GroupRelationMapper, G
                 .eq(GroupRelation::getGid, groupRelation.getGid()));
         if (oldRelation == null) {
             oldRelation = groupRelation;
+            oldRelation.setGrid(null);
             oldRelation.setReadTime((int) Instant.now().getEpochSecond());
             oldRelation.setUpdateTime((int) Instant.now().getEpochSecond());
             baseMapper.insert(oldRelation);
@@ -71,15 +74,19 @@ public class GroupRelationServiceImpl extends ServiceImpl<GroupRelationMapper, G
             oldRelation.setUpdateTime((int) Instant.now().getEpochSecond());
             baseMapper.updateById(oldRelation);
         }
-        return groupRelation;
+        return oldRelation;
     }
 
     @Override
-    public void handleDismiss(Long gid) {
+    public GroupRelation handleDismiss(Long gid) {
+        GroupRelation leaderRelation = baseMapper.selectOne(Wrappers.<GroupRelation>lambdaQuery()
+                .eq(GroupRelation::getGid, gid)
+                .eq(GroupRelation::getEnable, GroupRelation.LEADER));
         GroupRelation groupRelation = GroupRelation.builder().enable(GroupRelation.DISMISS).build();
         baseMapper.update(groupRelation, Wrappers.<GroupRelation>lambdaQuery().eq(GroupRelation::getGid, gid));
         Group group = Group.builder().enable(0).gid(gid).build();
         groupMapper.updateById(group);
+        return leaderRelation;
     }
 
 

@@ -17,8 +17,9 @@ public class GroupRelation {
     public final static int NO_DEAL = 0;
     public final static int REFUSE = 1;
     public final static int AGREE = 2;
-    public final static int DISMISS = 3;
-    public final static int LEADER = 4;
+    public final static int DELETE = 3;
+    public final static int DISMISS = 4;
+    public final static int LEADER = 5;
 
     @TableId(value = "grid",  type = IdType.AUTO)
     private Long grid;

@@ -15,6 +15,6 @@ public class UnsubscribeEventListener implements ApplicationListener<SessionUnsu
 
     @Override
     public void onApplicationEvent(SessionUnsubscribeEvent sessionUnsubscribeEvent) {
-        log.info("订阅取消：" + sessionUnsubscribeEvent.getUser().getName() + "->" + sessionUnsubscribeEvent.getMessage().getHeaders().get("destination"));
+        log.info("订阅取消：" + sessionUnsubscribeEvent.getUser().getName() + "->" + sessionUnsubscribeEvent.getMessage().getHeaders());
     }
 }

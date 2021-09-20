@@ -1,9 +1,11 @@
 package com.wangyou.websocketforandroid.controller;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.wangyou.websocketforandroid.entity.Chat;
 import com.wangyou.websocketforandroid.entity.GroupRelation;
 import com.wangyou.websocketforandroid.entity.User;
 import com.wangyou.websocketforandroid.entity.UserRelation;
+import com.wangyou.websocketforandroid.service.ChatService;
 import com.wangyou.websocketforandroid.service.GroupRelationService;
 import com.wangyou.websocketforandroid.service.UserRelationService;
 import com.wangyou.websocketforandroid.service.UserService;
@@ -42,6 +44,9 @@ public class GreetingController {
     GroupRelationService groupRelationService;
 
     @Autowired
+    ChatService chatService;
+
+    @Autowired
     SimpMessagingTemplate simpMessagingTemplate;
 
     @MessageMapping("/hello")
@@ -51,8 +56,28 @@ public class GreetingController {
     }
 
     @MessageMapping("/chat")
-    public void chat(Principal principal, String message) {
-        simpMessagingTemplate.convertAndSendToUser(principal.getName(), "/queue/chat", new String[]{message});
+    public void chat(Principal principal, @RequestBody  Chat chat) {
+        chat = chatService.handleChat(principal.getName(), chat);
+        Set<String> noticedUserName = new HashSet<>();
+        noticedUserName.add(principal.getName());
+        if (chat.getEnable() == Chat.PRIVATE_CHAT) {
+            // 私聊
+            User user = userService.getById(chat.getRecipient());
+            noticedUserName.add(user.getUsername());
+        } else {
+            // 群聊
+            User leader = userService.findLeader(chat.getGid());
+            noticedUserName.add(leader.getUsername());
+            List<User> members = userService.findMembers(chat.getGid());
+            for (User member: members) {
+                noticedUserName.add(member.getUsername());
+            }
+        }
+        // 向当前的订阅者发信息
+        for (String username :
+                noticedUserName) {
+            simpMessagingTemplate.convertAndSendToUser(username, "/queue/chat", chat);
+        }
     }
 
     @MessageMapping("/friendApplication")
@@ -68,19 +93,22 @@ public class GreetingController {
     @MessageMapping("/groupApplication")
     public void groupApplication(Principal principal, @RequestBody GroupRelation groupRelation) {
         log.info(principal.getName() + " -> " + groupRelation.toString());
+        // 订阅名单
         Set<String> noticedUserName = new HashSet<>();
-        groupRelation = groupRelationService.handleGroupRelation(principal.getName(), groupRelation);
+        // 所有的申请总是要发给群主
         noticedUserName.add(userService.findLeader(groupRelation.getGid()).getUsername());
-        if (groupRelation.getEnable() != GroupRelation.DISMISS) {
-            // 申请、拒绝、同意
-            noticedUserName.add(userService.getById(groupRelation.getUid()).getUsername());
-        } else {
-            groupRelationService.handleDismiss(groupRelation.getGid());
+        if (groupRelation.getEnable() == GroupRelation.DISMISS){
             List<User> members = userService.findMembers(groupRelation.getGid());
             for (User user :
                     members) {
                 noticedUserName.add(user.getUsername());
             }
+            groupRelation = groupRelationService.handleDismiss(groupRelation.getGid());
+            groupRelation.setEnable(GroupRelation.DISMISS);
+        } else {
+            // 申请、拒绝、同意
+            groupRelation = groupRelationService.handleGroupRelation(principal.getName(), groupRelation);
+            noticedUserName.add(userService.getById(groupRelation.getUid()).getUsername());
         }
         // 向当前的订阅者发信息
         for (String username :

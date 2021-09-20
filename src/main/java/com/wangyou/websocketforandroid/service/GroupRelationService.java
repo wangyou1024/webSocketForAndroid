@@ -11,5 +11,5 @@ public interface GroupRelationService extends IService<GroupRelation> {
 
     public GroupRelation handleGroupRelation(String username, GroupRelation groupRelation);
 
-    public void handleDismiss(Long gid);
+    public GroupRelation handleDismiss(Long gid);
 }
