@@ -5,8 +5,8 @@ server:
     session:
       cookie:
         max-age: 36000
-#数据库的配置信息
 spring:
+  #数据库的配置信息
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
