@@ -44,7 +44,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(WebSecurity web) {
-        web.ignoring().antMatchers("/test","/user/signUp");
+        web.ignoring().antMatchers("/test","/user/signUp", "/file/imageHeader/**");
     }
 
     @Override

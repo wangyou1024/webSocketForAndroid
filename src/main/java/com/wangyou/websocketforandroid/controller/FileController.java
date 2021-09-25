@@ -5,23 +5,24 @@ import com.wangyou.websocketforandroid.entity.ResponseData;
 import com.wangyou.websocketforandroid.entity.User;
 import com.wangyou.websocketforandroid.service.GroupService;
 import com.wangyou.websocketforandroid.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ResourceUtils;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
 import java.util.Objects;
 import java.util.UUID;
 
+@Slf4j
 @RequestMapping("/file")
 @RestController
 public class FileController {
@@ -35,9 +36,12 @@ public class FileController {
     @Autowired
     GroupService groupService;
 
+    final static String dir = "D:/code/file/";
+    // final static String dir = "/root/webapp/file/androidChat/";
 
     @RequestMapping("/imageHeader/{type}/{id}")
-    public ResponseEntity<?> getImage(@PathVariable("type") String type, @PathVariable("id") String id) throws FileNotFoundException {
+    public void getImage(HttpServletResponse httpServletResponse, @PathVariable("type") String type, @PathVariable("id") String id) throws IOException {
+        OutputStream out = null;
         String fileName = "";
         if (Objects.equals(type, "0")) {
             User user = userService.getById(id);
@@ -53,16 +57,30 @@ public class FileController {
         if (Strings.isEmpty(fileName)) {
             fileName = "Default.jpg";
         }
-        String dir = ResourceUtils.getURL("classpath:").getPath() + "static" + File.separator + fileName;
-        Resource resource = resourceLoader.getResource("file:" + dir);
-        return ResponseEntity.ok(resource);
+        try {
+            byte[] byteArray;
+            httpServletResponse.setHeader("Content-Disposition", "attachment;filename=" + fileName + " ");
+            InputStream input = new FileInputStream(new File(dir+fileName));
+            int lenth = input.available();
+            byteArray = new byte[lenth];
+            input.read(byteArray);
+            input.close();
+            out = httpServletResponse.getOutputStream();
+            out.write(byteArray);
+            out.flush();
+            out.close();
+        } catch (Exception ex) {
+            log.error(ex.getMessage());
+        } finally {
+            if (out != null)
+                out.close();
+        }
     }
 
     @RequestMapping("/uploadImage")
     public ResponseData<String> uploadImage(@RequestParam("imageFile") MultipartFile imageFile,
                                             @RequestParam("type") Integer type,
                                             @RequestParam("id") Long id) throws IOException {
-        String dir = ResourceUtils.getURL("classpath:").getPath() + "static" + File.separator;
         String fileName = imageFile.getOriginalFilename();
         ResponseData<String> responseData = ResponseData.<String>builder()
                 .code("200")
