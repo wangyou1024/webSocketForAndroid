@@ -37,7 +37,7 @@ public class GroupRelation {
     private Integer readTime;
 
     /**
-     * 是否可用，0代表未操作，1代表拒绝，2代表同意，3代表群聊已解散，4代表群主
+     * 是否可用，0代表未操作，1代表拒绝，2代表同意，3代表被踢出群聊，4代表群聊解散，5代表群主
      */
     @TableField("enable")
     private Integer enable;
